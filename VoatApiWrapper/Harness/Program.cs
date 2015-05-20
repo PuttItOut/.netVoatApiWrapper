@@ -9,7 +9,7 @@ namespace Harness {
     class Program {
         static void Main(string[] args) {
 
-            
+
             //********************************************************************************************************
             //This is just a simple console application to demonstrate how to use the .netVoatApiWrapper. In your
             //project you will simply compile the VoatApiWrapper (class library) project (or include the source 
@@ -35,20 +35,26 @@ namespace Harness {
             //All API Responses will be returned in this form (ApiResponse). You can check the .Success property or the .StatusCode to determine if operation succeeded.
             ApiResponse response;
 
+            //Set api defaults example (there isn't big reasons to change the defaults as it provides the safest way to access the api and handles any ApiThrottleLimit exceptions.
+            api.EnableMultiThreading = false;
+            api.RetryOnThrottleLimit = true;
+            api.WaitTimeOnThrottleLimit = 1500;
+            api.MaxThrottleRetryCount = 1;
+
+
             //Create Discussion
             response = api.PostDiscussion("PuttItOutPlease", "This is a post using .NET C# Voat API Wrapper", "Title says it all - Do you like wrappers?");
-            if (response.Success) { 
+            if (response.Success) {
                 Console.WriteLine(response.Data.ToString());
             } else {
                 Console.WriteLine("{0}: {1}", response.Error.Type, response.Error.Message);
             }
 
 
-            //Test Switch Account
-            ApiAuthenticator.Instance.Login("username2", "password2");
-            response = api.PostDiscussion("PuttItOutPlease", "This is a post using .NET C# Voat API Wrapper 2", "Title says it all - Do you like wrappers?");
+            //Retrieve Subverse Submissions 
+            response = api.GetSubmissionsBySubverse("PuttItOutPlease", new { sort = "top", count = 5, index = 0, span = "week" });
             if (response.Success) {
-                Console.WriteLine(response.Data.ToString());
+                Console.WriteLine(response.Data[0].ToString());
             } else {
                 Console.WriteLine("{0}: {1}", response.Error.Type, response.Error.Message);
             }
@@ -59,7 +65,7 @@ namespace Harness {
 
             response = api.GetUserComments("DerpyGuy");
             if (response.Success) {
-                Console.WriteLine(response.Data.ToString());
+                Console.WriteLine(response.Data[0].ToString());
             } else {
                 Console.WriteLine("{0}: {1}", response.Error.Type, response.Error.Message);
             }
@@ -71,3 +77,4 @@ namespace Harness {
         }
     }
 }
+

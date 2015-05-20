@@ -25,9 +25,6 @@ namespace VoatApiWrapper {
         public static string ApiPublicKey = null;
         public static string ApiPrivateKey = null;
 
-
-
-
         public static bool IsValid {
             get { return !String.IsNullOrEmpty(BaseEndpoint) && !String.IsNullOrEmpty(ApiPublicKey); }
         }
