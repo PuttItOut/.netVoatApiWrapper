@@ -13,7 +13,7 @@ namespace VoatApiWrapper {
 
     public abstract class BaseApiProxy {
 
-        private int _retryWaitTime = 1000;
+        private int _retryWaitTime = 1100;
         private AutoResetEvent _lockHandle = new AutoResetEvent(true);
         private bool _retryOnThrottleLimit = true;
         private int _maxThrottleRetryCount = 1;
@@ -92,9 +92,13 @@ namespace VoatApiWrapper {
                 req.Headers.Add("Authorization", String.Format("Bearer {0}", ApiAuthenticator.Instance.Token));
             }
             
-            if (method != HttpMethod.Get && !String.IsNullOrEmpty(body)) {
+            if (method != HttpMethod.Get){
                 using (var sw = new StreamWriter(req.GetRequestStream())) {
-                    sw.Write(body);
+                    if (!String.IsNullOrEmpty(body)) {
+                        sw.Write(body);
+                    } else {
+                        sw.Write("");
+                    }
                 }
             }
 
@@ -105,16 +109,24 @@ namespace VoatApiWrapper {
                 resp = (HttpWebResponse)ex.Response;
             }
 
-            var response = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResponse>(Helper.ReadStream(resp.GetResponseStream()));
-            response.StatusCode = resp.StatusCode;
+            if (resp != null) {
+                var response = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResponse>(Helper.ReadStream(resp.GetResponseStream()));
+                response.StatusCode = resp.StatusCode;
 
-            //reissue if ApiThrottleLimit exception
-            if (!response.Success && response.Error != null && response.Error.Type == "ApiThrottleLimit" && RetryOnThrottleLimit && requestCount < MaxThrottleRetryCount) {
-                Console.WriteLine("[{1}] ApiThrottleLimit. Waiting {0}", WaitTimeOnThrottleLimit, System.Threading.Thread.CurrentThread.ManagedThreadId.ToString());
-                System.Threading.Thread.Sleep(WaitTimeOnThrottleLimit);
-                return PrivateRequest(method, endpoint, body, queryString, (requestCount + 1));
-            } else {
-                return response;    
+                //reissue if ApiThrottleLimit exception
+                if (!response.Success && response.Error != null && response.Error.Type == "ApiThrottleLimit" && RetryOnThrottleLimit && requestCount < MaxThrottleRetryCount) {
+                    Console.WriteLine("[{1}] ApiThrottleLimit. Waiting {0}", WaitTimeOnThrottleLimit, System.Threading.Thread.CurrentThread.ManagedThreadId.ToString());
+                    System.Threading.Thread.Sleep(WaitTimeOnThrottleLimit);
+                    return PrivateRequest(method, endpoint, body, queryString, (requestCount + 1));
+                } else {
+                    return response;
+                }
+            } else { 
+                return new ApiResponse(){ 
+                    StatusCode = HttpStatusCode.ServiceUnavailable, 
+                    Success = false,
+                    Error = new ApiResponse.ErrorInfo() { Type = "NoResponse", Message = "No response was received by the server." }
+                };
             }
         }
     }
