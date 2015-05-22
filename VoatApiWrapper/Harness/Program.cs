@@ -20,7 +20,7 @@ namespace Harness {
             ApiInfo.ApiPublicKey = "[Your Api Key Here]";
             ApiInfo.BaseEndpoint = "[API Endpoint URL Here]";
 
-            //Authenticate a user
+            //Authenticate a user using the ApiAuthenticator Object
             var authResult = ApiAuthenticator.Instance.Login("username", "password");
             if (!authResult.Success) {
                 Console.WriteLine("{0}: {1}", authResult.Error.Type, authResult.Error.Message);

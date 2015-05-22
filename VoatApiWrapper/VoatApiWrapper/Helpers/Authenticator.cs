@@ -54,21 +54,22 @@ namespace VoatApiWrapper {
                 response = (HttpWebResponse)ex.Response;
             }
 
-
-            using (var responseStream = new StreamReader(response.GetResponseStream())) {
-                if (response.StatusCode == HttpStatusCode.OK) {
-                    _ticket = Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(responseStream.ReadToEnd(), _ticket);
-                } else {
-                    
-                    OAuthErrorInfo error = Newtonsoft.Json.JsonConvert.DeserializeObject<OAuthErrorInfo>(responseStream.ReadToEnd());
-                    if (error != null) {
-                        var r = new ApiResponse();
-                        r.Success = false;
-                        r.Error = new ApiResponse.ErrorInfo() { Type = error.Error, Message = error.Description };
-                        return r;
-                    }
-                }
+            if (response == null) {
+                return Helper.NoServerResponse;
+            }
             
+            string responseString = Helper.ReadStream(response.GetResponseStream());
+
+            if (response.StatusCode == HttpStatusCode.OK) {
+                _ticket = Newtonsoft.Json.JsonConvert.DeserializeObject<OAuthTicket>(responseString);
+            } else {
+                OAuthErrorInfo error = Newtonsoft.Json.JsonConvert.DeserializeObject<OAuthErrorInfo>(responseString);
+                if (error != null) {
+                    var r = new ApiResponse();
+                    r.Success = false;
+                    r.Error = new ApiResponse.ErrorInfo() { Type = error.Error, Message = error.Description };
+                    return r;
+                }
             }
             return new ApiResponse() { Success = true };
         }
@@ -77,9 +78,15 @@ namespace VoatApiWrapper {
             _ticket = null;
         }
 
+        public void AuthenticateRequest(HttpWebRequest request) {
+            if (IsAuthenticated) {
+                request.Headers.Add("Authorization", String.Format("Bearer {0}", Token));
+            }
+        }
+
         public bool IsAuthenticated {
             get {
-                return _ticket != null && DateTime.Now.AddTicks(_ticket.expires_in) > DateTime.Now;
+                return _ticket.IsValid;
             }
         }
         public string Token {
@@ -88,11 +95,29 @@ namespace VoatApiWrapper {
             }
         }
 
-        private class OAuthTicket { 
-            public string access_token {get; set;} 
-            public string token_type  {get; set;} 
-            public string userName  {get; set;} 
-            public int expires_in  {get; set;}        
+        [Serializable]
+        private class OAuthTicket {
+
+            private DateTime _issueDate = DateTime.UtcNow;
+
+            public bool IsExpired { 
+                get {
+                    return _issueDate.AddSeconds(expires_in) <= DateTime.UtcNow;
+                }
+            }
+
+            public bool IsValid {
+                get {
+                    return (!String.IsNullOrEmpty(access_token) && !IsExpired);
+                }
+            }
+            
+            public string access_token {get; set;}
+            public string token_type { get; set; }
+            public string userName { get; set; }
+            public int expires_in { get; set; }
+            public DateTime IssueDate { get { return _issueDate; } set { _issueDate = value; } }        
+
         }
 
     }
