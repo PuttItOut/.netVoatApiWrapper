@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers\TokenStore.cs" />
     <Compile Include="Helpers\VoteEnum.cs" />
     <Compile Include="VoatApiProxy.cs" />
     <Compile Include="Helpers\ApiInfo.cs" />

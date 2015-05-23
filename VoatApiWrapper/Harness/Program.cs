@@ -35,7 +35,7 @@ namespace Harness {
             //All API Responses will be returned in this form (ApiResponse). You can check the .Success property or the .StatusCode to determine if operation succeeded.
             ApiResponse response;
 
-            //Set api defaults example (there isn't big reasons to change the defaults as it provides the safest way to access the api and handles any ApiThrottleLimit exceptions.
+            //Set api defaults example (there isn't a big reason to change these defaults as they provide the safest way to access the api and handle ApiThrottleLimit exception by default).
             api.EnableMultiThreading = false;
             api.RetryOnThrottleLimit = true;
             api.WaitTimeOnThrottleLimit = 1500;

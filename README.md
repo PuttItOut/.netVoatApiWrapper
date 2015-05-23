@@ -116,4 +116,44 @@ if (!response.Success){
 
 ~~~
 
-Good luck and more updates will be coming soon such as serializing Authentication Tokens.
+###Token Storage
+
+By default the ApiAuthenticator uses IsolatedStorage to store and retrieve json serialized authentication token responses. These are not encrypted files. 
+
+If you prefer to not have the ApiAuthenticator use IsolatedStorage you can simply configure your start up code to use a dummy store.
+
+~~~
+
+//Doesn't store auth tokens by using the DummyTokenStore object
+ApiAuthenticator.Instance = new ApiAuthenticator();
+
+//the above line of code is equivalent to the following line 
+ApiAuthenticator.Instance = new ApiAuthenticator(new DummyTokenStore());
+
+~~~
+
+To provide your own Token Store handler, inherit form the ITokenStore interface and pass an instance of your custom class into the ApiAuthenticator constructor.
+
+~~~
+
+//Implement your custom TokenStore
+public class YourCustomTokenStoreClass : ITokenStore {
+
+    public AuthToken Find(string userName) {
+        //...
+    }
+
+    public void Store(string userName, AuthToken token) {
+        //...
+    }
+
+    public void Purge(string userName) {
+        //...
+    }
+}
+
+
+//Create and assign your custom TokenStore to the ApiAuthenticator.Instance property
+ApiAuthenticator.Instance = new ApiAuthenticator(new YourCustomTokenStoreClass());
+
+~~~
