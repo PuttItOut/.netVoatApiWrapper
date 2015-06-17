@@ -43,7 +43,7 @@ namespace Harness {
 
 
             //Create Discussion
-            response = api.PostDiscussion("PuttItOutPlease", "This is a post using .NET C# Voat API Wrapper", "Title says it all - Do you like wrappers?");
+            response = api.SubmitDiscussion("PuttItOutPlease", "This is a post using .NET C# Voat API Wrapper", "Title says it all - Do you like wrappers?");
             if (response.Success) {
                 Console.WriteLine(response.Data.ToString());
             } else {
@@ -63,7 +63,7 @@ namespace Harness {
             //Test logout 
             ApiAuthenticator.Instance.Logout();
 
-            response = api.GetUserComments("DerpyGuy");
+            response = api.GetUserComments("DerpyGuy", "");
             if (response.Success) {
                 Console.WriteLine(response.Data[0].ToString());
             } else {
