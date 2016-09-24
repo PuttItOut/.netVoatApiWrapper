@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,6 +18,13 @@ namespace VoatApiWrapper {
         private AutoResetEvent _lockHandle = new AutoResetEvent(true);
         private bool _retryOnThrottleLimit = true;
         private int _maxThrottleRetryCount = 1;
+        private JsonSerializerSettings _serializerSettings;
+
+        public BaseApiProxy() {
+            _serializerSettings = new JsonSerializerSettings();
+            _serializerSettings.DateFormatString = "{0:s}";
+        }
+
 
         public bool EnableMultiThreading { get; set; }
 
@@ -39,7 +47,7 @@ namespace VoatApiWrapper {
             //prepare body
             string jsonBody = null;
             if (method != HttpMethod.Get && body != null) {
-                jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(body);
+                jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(body, _serializerSettings);
             }
 
             //prepare querystrings 
@@ -50,7 +58,12 @@ namespace VoatApiWrapper {
 
                 foreach (var property in properties) {
                     var val = property.GetValue(queryStringPairs);
-                    keyValuePairs.Add(String.Format("{0}={1}", property.Name, val));
+                    var stringVal = val.ToString();
+                    if (val is DateTime) {
+                        stringVal = ((DateTime)val).ToString("s");
+                    }
+                    
+                    keyValuePairs.Add(String.Format("{0}={1}", property.Name, stringVal));
                 }
                 queryString = String.Join("&", keyValuePairs);
             }
@@ -111,14 +124,26 @@ namespace VoatApiWrapper {
                 return Helper.NoServerResponse;
             }
 
-            var apiResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResponse>(Helper.ReadStream(response.GetResponseStream()));
+            string responseString = Helper.ReadStream(response.GetResponseStream());
+            ApiResponse apiResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResponse>(responseString);
             apiResponse.StatusCode = response.StatusCode;
 
             //reissue if ApiThrottleLimit exception
-            if (!apiResponse.Success && apiResponse.Error != null && apiResponse.Error.Type == "ApiThrottleLimit" && RetryOnThrottleLimit && requestCount < MaxThrottleRetryCount) {
-                Console.WriteLine("[{1}] ApiThrottleLimit. Waiting {0}", WaitTimeOnThrottleLimit, System.Threading.Thread.CurrentThread.ManagedThreadId.ToString());
-                System.Threading.Thread.Sleep(WaitTimeOnThrottleLimit);
-                return PrivateRequest(method, endpoint, body, queryString, (requestCount + 1));
+            if (!apiResponse.Success && apiResponse.Error != null) {
+                if (apiResponse.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    //token expired
+                    var refreshResponse = ApiAuthenticator.Instance.Refresh();
+                    if (refreshResponse.Success)
+                    {
+                        return PrivateRequest(method, endpoint, body, queryString, (requestCount + 1));
+                    }
+                } else if (apiResponse.Error.Type == "ApiThrottleLimit" && RetryOnThrottleLimit && requestCount < MaxThrottleRetryCount) {
+                    Console.WriteLine("[{1}] ApiThrottleLimit. Waiting {0}", WaitTimeOnThrottleLimit, System.Threading.Thread.CurrentThread.ManagedThreadId.ToString());
+                    System.Threading.Thread.Sleep(WaitTimeOnThrottleLimit);
+                    return PrivateRequest(method, endpoint, body, queryString, (requestCount + 1));
+                }
+                return apiResponse;
             } else {
                 return apiResponse;
             }

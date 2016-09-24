@@ -13,7 +13,8 @@ Provide setup information in code.
 
 ``` cs
 //Set your api key and endpoint location
-ApiInfo.ApiPublicKey = "[Your Api Key Here]";
+ApiInfo.ApiPublicKey = "[Your Public Api Key Here]";
+ApiInfo.ApiPrivateKey = "[Your Private Api Key Here]";
 ApiInfo.BaseEndpoint = "[API Endpoint URL Here]"; //This value is the root of the site hosting the API.
 ```
 

@@ -147,7 +147,32 @@ namespace VoatApiWrapper
 
         #endregion 
 
+        
+        #region Stream
 
+        public ApiResponse GetSubmissionStream() {
+            return Request(HttpMethod.Get, "api/v1/stream/submissions");
+        }
+
+        public ApiResponse GetCommentStream() {
+            return Request(HttpMethod.Get, "api/v1/stream/comments");
+        }
+
+
+        #endregion 
+
+        #region Misc
+
+        public ApiResponse ServerStatus() {
+            return Request(HttpMethod.Get, "api/v1/status");
+        }
+
+        public ApiResponse ServerTime() {
+            return Request(HttpMethod.Get, "api/v1/time");
+        }
+
+
+        #endregion 
 
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,13 +16,18 @@ namespace Harness {
             //project you will simply compile the VoatApiWrapper (class library) project (or include the source 
             //project in your solution) and consume it with your Tool/App.
             //********************************************************************************************************
-
+            
             //Set your api key and endpoint location
-            ApiInfo.ApiPublicKey = "[Your Api Key Here]";
-            ApiInfo.BaseEndpoint = "[API Endpoint URL Here]";
+            ApiInfo.ApiPublicKey = ConfigurationManager.AppSettings["voat.api.PublicKey"];
+            ApiInfo.ApiPrivateKey = ConfigurationManager.AppSettings["voat.api.PrivateKey"];
+            ApiInfo.BaseEndpoint = ConfigurationManager.AppSettings["voat.api.EndPoint"];
 
             //Authenticate a user using the ApiAuthenticator Object
-            var authResult = ApiAuthenticator.Instance.Login("username", "password");
+            var authResult = ApiAuthenticator.Instance.Login(
+                ConfigurationManager.AppSettings["voat.UserName"], 
+                ConfigurationManager.AppSettings["voat.Password"], 
+                true);
+
             if (!authResult.Success) {
                 Console.WriteLine("{0}: {1}", authResult.Error.Type, authResult.Error.Message);
                 Console.WriteLine("Press <Enter> to Exit");
@@ -42,8 +48,8 @@ namespace Harness {
             api.MaxThrottleRetryCount = 1;
 
 
-            //Create Discussion
-            response = api.PostDiscussion("PuttItOutPlease", "This is a post using .NET C# Voat API Wrapper", "Title says it all - Do you like wrappers?");
+            //Submit Discussion
+            response = api.SubmitDiscussion("PuttItOutPlease", "This is a post using .NET C# Voat API Wrapper", "Title says it all - Do you like wrappers?");
             if (response.Success) {
                 Console.WriteLine(response.Data.ToString());
             } else {
@@ -52,7 +58,7 @@ namespace Harness {
 
 
             //Retrieve Subverse Submissions 
-            response = api.GetSubmissionsBySubverse("PuttItOutPlease", new { sort = "top", count = 5, index = 0, span = "week" });
+            response = api.GetSubmissionsBySubverse("news", new { sort = "top", count = 5, index = 0, span = "week" });
             if (response.Success) {
                 Console.WriteLine(response.Data[0].ToString());
             } else {
@@ -63,7 +69,7 @@ namespace Harness {
             //Test logout 
             ApiAuthenticator.Instance.Logout();
 
-            response = api.GetUserComments("DerpyGuy");
+            response = api.GetUserComments("DerpyGuy", null);
             if (response.Success) {
                 Console.WriteLine(response.Data[0].ToString());
             } else {

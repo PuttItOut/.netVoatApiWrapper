@@ -13,6 +13,8 @@ namespace VoatApiWrapper {
     //This structure is stolen from the Voat v1 API source code. Just want to let everyone know that a theft has occured. That's right, I stole my own code and I'm turning myself in.
     public class ApiResponse {
 
+
+
         /// <summary>
         /// An absolute value indicating whether operation succeeded or failed. If this value is false the error object will be populated with details.
         /// </summary>
@@ -54,6 +56,12 @@ namespace VoatApiWrapper {
             public string Message { get; set; }
         }
 
+        [JsonIgnore]
+        public bool HasData {
+            get {
+                return Data != null && Data.Count > 0;
+            }
+        }
     
     }
 
