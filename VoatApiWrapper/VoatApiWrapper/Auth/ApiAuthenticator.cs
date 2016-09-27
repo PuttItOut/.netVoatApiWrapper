@@ -1,64 +1,71 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
-namespace VoatApiWrapper {
-
-
-    public class ApiAuthenticator {
-
+namespace VoatApiWrapper
+{
+    public class ApiAuthenticator
+    {
         private static ApiAuthenticator _instance;
 
         private AuthToken _token = null;
 
         private ITokenStore _tokenStore = null;
 
-        private ITokenStore TokenStore {
-            get {
-                if (_tokenStore == null) {
+        private ITokenStore TokenStore
+        {
+            get
+            {
+                if (_tokenStore == null)
+                {
                     _tokenStore = new DummyTokenStore();
                 }
-                return _tokenStore; 
+                return _tokenStore;
             }
         }
-        public string UserName {
-            get {
+
+        public string UserName
+        {
+            get
+            {
                 return _token == null ? null : _token.userName;
             }
         }
+
         /// <summary>
         /// Create an ApiAuthenicator object with a custom TokenStore implementation
         /// </summary>
         /// <param name="tokenStore"></param>
-        public ApiAuthenticator(ITokenStore tokenStore) {
+        public ApiAuthenticator(ITokenStore tokenStore)
+        {
             _tokenStore = tokenStore;
         }
 
         /// <summary>
         /// This constructor assigns a Dummy Token Store object so that API Authentication tokens are not stored.
         /// </summary>
-        public ApiAuthenticator() {
+        public ApiAuthenticator()
+        {
             _tokenStore = new DummyTokenStore();
         }
 
         /// <summary>
         /// All Api requests will use this static property to resolve and attempt authentication. If you use a custom ApiAuthenticator(ITokenStore) constructor, assign it to this property so the ApiProxy can utilize it.
         /// </summary>
-        public static ApiAuthenticator Instance {
-            get {
-                if (_instance == null) {
+        public static ApiAuthenticator Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
                     _instance = new ApiAuthenticator(new IsolatedStorageTokenStore());
                 }
                 return _instance;
             }
-            set {
+
+            set
+            {
                 _instance = value;
             }
         }
@@ -66,10 +73,10 @@ namespace VoatApiWrapper {
         protected void IssueRefreshCallback(AuthToken authToken)
         {
             var obj = this; //javascript paranoid
+
             //Don't look at me, just want the quickest way to do this.
             Thread thread = new Thread(() =>
             {
-                
                 var sleepSpan = authToken.ExpirationDate.Subtract(DateTime.UtcNow);
                 sleepSpan = sleepSpan.Subtract(TimeSpan.FromSeconds(authToken.RefreshBufferInSeconds));
                 Thread.Sleep((int)sleepSpan.TotalMilliseconds);
@@ -80,9 +87,11 @@ namespace VoatApiWrapper {
             thread.Start();
         }
 
-        public ApiResponse Refresh(bool autoRefresh = false) {
+        public ApiResponse Refresh(bool autoRefresh = false)
+        {
             return Refresh(TokenStore.Find(UserName));
         }
+
         public ApiResponse Refresh(AuthToken storedToken, bool autoRefresh = false)
         {
             if (storedToken != null)
@@ -141,23 +150,28 @@ namespace VoatApiWrapper {
                     }
                     return new ApiResponse() { Success = true };
                 }
-                
             }
             return new ApiResponse() { Success = false, Error = new ApiResponse.ErrorInfo() { Type = "ExpiredToken", Message = "Token can not be refreshed" } };
         }
-        public ApiResponse Login(string userName, string password, bool autoRefresh) {
 
-            if (!ApiInfo.IsValid) {
+        public ApiResponse Login(string userName, string password, bool autoRefresh)
+        {
+            if (!ApiInfo.IsValid)
+            {
                 throw new InvalidProgramException("The ApiInfo object does not have valid data.");
             }
 
             //Check if we have a token
             AuthToken storedToken = TokenStore.Find(userName);
-            if (storedToken != null){
-                if (storedToken.IsValid) {
+            if (storedToken != null)
+            {
+                if (storedToken.IsValid)
+                {
                     _token = storedToken;
                     return new ApiResponse() { Success = true };
-                } else {
+                }
+                else
+                {
                     TokenStore.Purge(userName);
                 }
             }
@@ -170,25 +184,31 @@ namespace VoatApiWrapper {
             req.ContentType = "application/x-www-form-urlencoded";
             req.Method = "POST";
 
-            using (var content = new StreamWriter(req.GetRequestStream())) {
+            using (var content = new StreamWriter(req.GetRequestStream()))
+            {
                 content.Write($"grant_type=password&username={userName}&password={password}&client_id={ApiInfo.ApiPublicKey}&client_secret={ApiInfo.ApiPrivateKey}");
             }
 
             HttpWebResponse response = null;
 
-            try {
+            try
+            {
                 response = (HttpWebResponse)req.GetResponse();
-            } catch (WebException ex) {
+            }
+            catch (WebException ex)
+            {
                 response = (HttpWebResponse)ex.Response;
             }
 
-            if (response == null) {
+            if (response == null)
+            {
                 return Helper.NoServerResponse;
             }
-            
+
             string responseString = Helper.ReadStream(response.GetResponseStream());
 
-            if (response.StatusCode == HttpStatusCode.OK) {
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
                 _token = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthToken>(responseString);
                 TokenStore.Store(userName, _token);
                 if (autoRefresh)
@@ -196,9 +216,11 @@ namespace VoatApiWrapper {
                     IssueRefreshCallback(_token);
                 }
             }
-            else {
+            else
+            {
                 OAuthErrorInfo error = Newtonsoft.Json.JsonConvert.DeserializeObject<OAuthErrorInfo>(responseString);
-                if (error != null) {
+                if (error != null)
+                {
                     var r = new ApiResponse();
                     r.Success = false;
                     r.Error = new ApiResponse.ErrorInfo() { Type = error.Error, Message = error.Description };
@@ -207,72 +229,48 @@ namespace VoatApiWrapper {
             }
             return new ApiResponse() { Success = true };
         }
-        
-        public void Logout() {
+
+        public void Logout()
+        {
             _token = null;
         }
+
         public void Logout(string userName)
         {
             TokenStore.Purge(userName);
             Logout();
         }
-        public void AuthenticateRequest(HttpWebRequest request) {
-            if (IsAuthenticated) {
+
+        public void AuthenticateRequest(HttpWebRequest request)
+        {
+            if (IsAuthenticated)
+            {
                 request.Headers.Add("Authorization", String.Format("Bearer {0}", Token));
             }
         }
-        
-        public void SignRequest(HttpWebRequest request) {
-            if (!String.IsNullOrEmpty(ApiInfo.ApiPrivateKey)) {
+
+        public void SignRequest(HttpWebRequest request)
+        {
+            if (!String.IsNullOrEmpty(ApiInfo.ApiPrivateKey))
+            {
                 request.Headers.Add("Voat-HMAC", "TODO");
             }
         }
 
-        public bool IsAuthenticated {
-            get {
-                return _token.IsValid;
+        public bool IsAuthenticated
+        {
+            get
+            {
+                return _token != null ? _token.IsValid : false;
             }
         }
-        public string Token {
-            get {
+
+        public string Token
+        {
+            get
+            {
                 return _token.access_token;
             }
         }
-
-
-    }
-
-
-    [Serializable]
-    public class AuthToken {
-
-        private DateTime _issueDate = DateTime.UtcNow;
-
-        public int RefreshBufferInSeconds { get; set; } = 90;
-        //Native token fields
-        public string access_token { get; set; }
-        public string refresh_token { get; set; }
-        public string token_type { get; set; }
-        public string userName { get; set; }
-        public int expires_in { get; set; }
-
-
-        [JsonIgnore()]
-        public DateTime IssueDate { get { return _issueDate; } set { _issueDate = value; } }
-
-
-        [JsonIgnore()]
-        public DateTime ExpirationDate { get { return _issueDate.AddSeconds(expires_in - 5); } }
-
-        [JsonIgnore]
-        public bool IsExpired {
-            get { return ExpirationDate <= DateTime.UtcNow; }
-        }
-
-        [JsonIgnore]
-        public bool IsValid {
-            get { return (!String.IsNullOrEmpty(access_token) && !IsExpired); }
-        }
-
     }
 }
