@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Net;
+using VoatApiWrapper.Models;
 
 namespace VoatApiWrapper
 {

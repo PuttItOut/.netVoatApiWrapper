@@ -1,11 +1,18 @@
 ﻿using System;
 using System.Net.Http;
+using VoatApiWrapper.Framework;
+using VoatApiWrapper.Models;
 
 namespace VoatApiWrapper
 {
     //This isn't a complete coverage
     public class VoatApiProxy : BaseApiProxy
     {
+        public VoatApiProxy(ApiAuthenticator authenticator)
+        {
+            base.Authenticator = authenticator;
+        }
+
         #region Submission
 
         public ApiResponse SubmitDiscussion(string subverse, string title, string content)
@@ -176,19 +183,28 @@ namespace VoatApiWrapper
 
         #region Stream
 
-        public ApiResponse GetSubmissionStream()
+        public ApiResponse GetSubmissionStream(string subverse = null)
         {
-            return Request(HttpMethod.Get, "api/v1/stream/submissions");
+            return Request(HttpMethod.Get, String.Format("api/v1/stream/submissions{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}"));
+        }
+        public void PollSubmissionStream(Callback<ApiResponse> registration, string subverse = null)
+        {
+            registration.Method = HttpMethod.Get;
+            registration.Endpoint = String.Format("api/v1/stream/submissions{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}");
+            RequestCallBack(registration);
         }
 
-        public ApiResponse GetCommentStream()
+        public ApiResponse GetCommentStream(string subverse = null)
         {
-            return Request(HttpMethod.Get, "api/v1/stream/comments");
+            return Request(HttpMethod.Get, String.Format("api/v1/stream/comments{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}"));
         }
-
+        public void PollCommentStream(Callback<ApiResponse> registration, string subverse = null)
+        {
+            registration.Method = HttpMethod.Get;
+            registration.Endpoint = String.Format("api/v1/stream/comments{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}");
+            RequestCallBack(registration);
+        }
         #endregion Stream
-
-
 
         #region Misc
 

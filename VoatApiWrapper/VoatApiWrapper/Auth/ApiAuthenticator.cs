@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Threading;
+using VoatApiWrapper.Models;
 
 namespace VoatApiWrapper
 {

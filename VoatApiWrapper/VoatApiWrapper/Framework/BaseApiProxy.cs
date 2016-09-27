@@ -5,6 +5,9 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
+using VoatApiWrapper.Framework;
+using VoatApiWrapper.Models;
 
 namespace VoatApiWrapper
 {
@@ -15,6 +18,7 @@ namespace VoatApiWrapper
         private bool _retryOnThrottleLimit = true;
         private int _maxThrottleRetryCount = 1;
         private JsonSerializerSettings _serializerSettings;
+        private ApiAuthenticator _authenticator;
 
         public BaseApiProxy()
         {
@@ -42,6 +46,39 @@ namespace VoatApiWrapper
             set { if (value >= 0) { _retryWaitTime = value; } }
         }
 
+        protected ApiAuthenticator Authenticator
+        {
+            get {
+                if (_authenticator != null)
+                {
+                    return _authenticator;
+                }
+                //FailSafe
+                return ApiAuthenticator.Instance;
+            }
+            set {
+                _authenticator = value;
+            }
+        }
+        /// <summary>
+        /// This method loops
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="callback"></param>
+        protected void RequestCallBack<T>(Callback<T> callback) where T: ApiResponse
+        {
+            Task task = new Task(async () =>
+            {
+                while (!callback.CancellationToken.IsCancellationRequested)
+                {
+                    var response = Request(callback.Method, callback.Endpoint, callback.Body, callback.QueryStringPairs);
+                    callback.Handler(this, (T)response);
+                    await Task.Delay(callback.Delay).ConfigureAwait(false);
+                }
+            }, callback.CancellationToken);
+            callback.Task = task;
+            task.Start();
+        }
         protected ApiResponse Request(HttpMethod method, string endpoint, object body = null, object queryStringPairs = null)
         {
             //prepare body
@@ -107,7 +144,7 @@ namespace VoatApiWrapper
             req.ContentType = "application/json";
             req.Headers.Add("Voat-ApiKey", ApiInfo.ApiPublicKey);
 
-            ApiAuthenticator.Instance.AuthenticateRequest(req);
+            Authenticator.AuthenticateRequest(req);
 
             if (method != HttpMethod.Get)
             {

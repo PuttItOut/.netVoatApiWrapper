@@ -1,10 +1,38 @@
 ﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace VoatApiWrapper
+namespace VoatApiWrapper.Models
 {
+    public class ApiResponse<T> : BaseApiResponse
+    {
+        /// <summary>
+        /// This field contains the JSON Payload. 
+        /// </summary>
+        [JsonProperty("data", Order = 1)]
+        public T Data { get; set; }
+
+        [JsonIgnore]
+        public bool HasData
+        {
+            get
+            {
+                return Data != null;
+            }
+        }
+    }
+
+    public class ApiResponse : ApiResponse<dynamic>
+    {
+
+    }
+
     //This structure is stolen from the Voat v1 API source code. Just want to let everyone know that a theft has occured. That's right, I stole my own code and I'm turning myself in.
-    public class ApiResponse
+    public class BaseApiResponse
     {
         /// <summary>
         /// An absolute value indicating whether operation succeeded or failed. If this value is false the error object will be populated with details.
@@ -18,11 +46,7 @@ namespace VoatApiWrapper
         [JsonProperty("success", Order = 1)]
         public bool Success { get; set; }
 
-        /// <summary>
-        /// This field contains the JSON Payload. It's dynamic.
-        /// </summary>
-        [JsonProperty("data", Order = 1)]
-        public dynamic Data { get; set; }
+      
 
         /// <summary>
         /// If present the operation failed. Details are presented here.
@@ -45,26 +69,6 @@ namespace VoatApiWrapper
             public string Message { get; set; }
         }
 
-        [JsonIgnore]
-        public bool HasData
-        {
-            get
-            {
-                return Data != null && Data.Count > 0;
-            }
-        }
-    }
-
-    public class OAuthErrorInfo
-    {
-        public OAuthErrorInfo() : base()
-        {
-        }
-
-        [JsonProperty("error")]
-        public string Error { get; set; }
-
-        [JsonProperty("error_description")]
-        public string Description { get; set; }
+      
     }
 }

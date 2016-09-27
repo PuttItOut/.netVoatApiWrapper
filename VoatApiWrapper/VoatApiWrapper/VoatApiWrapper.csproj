@@ -48,18 +48,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Auth\ApiAuthenticator.cs" />
+    <Compile Include="Framework\CallBack.cs" />
     <Compile Include="Framework\TokenStore.cs" />
-    <Compile Include="Framework\VoteEnum.cs" />
+    <Compile Include="Models\VoteEnum.cs" />
+    <Compile Include="Models\ApiResponse.cs" />
+    <Compile Include="Models\OAuthErrorInfo.cs" />
     <Compile Include="VoatApiProxy.cs" />
     <Compile Include="Framework\ApiInfo.cs" />
     <Compile Include="Auth\AuthToken.cs" />
     <Compile Include="Framework\BaseApiProxy.cs" />
     <Compile Include="Framework\Helper.cs" />
-    <Compile Include="Framework\Responses.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Models\placeholder.txt" />
     <Content Include="READ_ME.txt" />
   </ItemGroup>
   <ItemGroup />

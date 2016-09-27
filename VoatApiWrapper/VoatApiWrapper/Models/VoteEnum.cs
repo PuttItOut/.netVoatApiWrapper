@@ -1,4 +1,4 @@
-﻿namespace VoatApiWrapper
+﻿namespace VoatApiWrapper.Models
 {
     public enum Vote
     {
