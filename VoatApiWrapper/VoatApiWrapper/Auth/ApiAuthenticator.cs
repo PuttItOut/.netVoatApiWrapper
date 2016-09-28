@@ -230,12 +230,17 @@ namespace VoatApiWrapper
             }
             return new ApiResponse() { Success = true };
         }
-
+        /// <summary>
+        /// Clears token from instance of ApiAuthenticator but leaves token in store
+        /// </summary>
         public void Logout()
         {
             _token = null;
         }
-
+        /// <summary>
+        /// Purges Token in store and clears token from instance of ApiAuthenticator
+        /// </summary>
+        /// <param name="userName"></param>
         public void Logout(string userName)
         {
             TokenStore.Purge(userName);
