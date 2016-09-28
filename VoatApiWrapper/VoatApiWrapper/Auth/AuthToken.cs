@@ -21,7 +21,6 @@ namespace VoatApiWrapper
 
         public int expires_in { get; set; }
 
-        [JsonIgnore()]
         public DateTime IssueDate { get { return _issueDate; } set { _issueDate = value; } }
 
         [JsonIgnore()]
