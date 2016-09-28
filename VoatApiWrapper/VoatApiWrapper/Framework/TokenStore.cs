@@ -14,7 +14,9 @@ namespace VoatApiWrapper
 
         void Purge(string id);
     }
-
+    /// <summary>
+    /// Stores to IsolatedStorage locations
+    /// </summary>
     public class IsolatedStorageTokenStore : ITokenStore
     {
         protected virtual IsolatedStorageFile GetStore
@@ -91,7 +93,9 @@ namespace VoatApiWrapper
             }
         }
     }
-
+    /// <summary>
+    /// Disables all token storage
+    /// </summary>
     public class DisabledTokenStore : ITokenStore
     {
         public AuthToken Find(string id)
@@ -109,6 +113,9 @@ namespace VoatApiWrapper
             /*no-op*/
         }
     }
+    /// <summary>
+    /// Stores tokens in in-memory dictionary
+    /// </summary>
     public class MemoryTokenStore : ITokenStore
     {
         private Dictionary<string, AuthToken> _tokens = new Dictionary<string, AuthToken>();

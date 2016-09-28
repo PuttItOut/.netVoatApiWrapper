@@ -122,15 +122,15 @@ if (!response.Success){
 
 By default the ApiAuthenticator uses IsolatedStorage to store and retrieve json serialized authentication token responses. These are not encrypted files. 
 
-If you prefer to not have the ApiAuthenticator use IsolatedStorage you can simply configure your start up code to use a dummy store.
+If you prefer to not have the ApiAuthenticator use IsolatedStorage you can simply configure your start up code to use an alternate store (DisabledTokenStore and MemoryTokenStore are two others included).
 
 ``` cs
 
-//Doesn't store auth tokens by using the DummyTokenStore object
-ApiAuthenticator.Instance = new ApiAuthenticator();
-
-//the above line of code is equivalent to the following line 
-ApiAuthenticator.Instance = new ApiAuthenticator(new DummyTokenStore());
+//Disable all token storage
+ApiAuthenticator.Instance = new ApiAuthenticator(new DisabledTokenStore());
+or 
+//Use program memory to store tokens
+ApiAuthenticator.Instance = new ApiAuthenticator(new MemoryTokenStore());
 
 ```
 
