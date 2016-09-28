@@ -20,7 +20,7 @@ namespace VoatApiWrapper
             {
                 if (_tokenStore == null)
                 {
-                    _tokenStore = new DummyTokenStore();
+                    _tokenStore = new DisabledTokenStore();
                 }
                 return _tokenStore;
             }
@@ -48,7 +48,7 @@ namespace VoatApiWrapper
         /// </summary>
         public ApiAuthenticator()
         {
-            _tokenStore = new DummyTokenStore();
+            _tokenStore = new DisabledTokenStore();
         }
 
         /// <summary>
@@ -93,93 +93,31 @@ namespace VoatApiWrapper
             return Refresh(TokenStore.Find(UserName));
         }
 
-        public ApiResponse Refresh(AuthToken storedToken, bool autoRefresh = false)
+
+        /// <summary>
+        /// Will attempt to load token from instance token store. Returns true if token is found and valid, else false.
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <returns></returns>
+        public bool TryLogin(string userName)
         {
-            if (storedToken != null)
-            {
-                if (storedToken.IsValid)
-                {
-                    HttpWebRequest req = WebRequest.CreateHttp(Path.Combine(ApiInfo.BaseEndpoint, "oauth/token"));
-                    req.Headers.Add("Voat-ApiKey", ApiInfo.ApiPublicKey);
-                    req.ContentType = "application/x-www-form-urlencoded";
-                    req.Method = "POST";
-
-                    using (var content = new StreamWriter(req.GetRequestStream()))
-                    {
-                        //content.Write($"grant_type=refresh_token&refesh_token={storedToken.refresh_token}");
-                        string payload = $"grant_type=refresh_token&client_id={ApiInfo.ApiPublicKey}&client_secret={ApiInfo.ApiPrivateKey}&refresh_token={storedToken.refresh_token}";
-                        content.Write(payload);
-                    }
-                    HttpWebResponse response = null;
-                    try
-                    {
-                        response = (HttpWebResponse)req.GetResponse();
-                    }
-                    catch (WebException ex)
-                    {
-                        response = (HttpWebResponse)ex.Response;
-                    }
-
-                    if (response == null)
-                    {
-                        return Helper.NoServerResponse;
-                    }
-
-                    string responseString = Helper.ReadStream(response.GetResponseStream());
-
-                    if (response.StatusCode == HttpStatusCode.OK)
-                    {
-                        Console.WriteLine("Refresh succeeded");
-                        _token = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthToken>(responseString);
-                        TokenStore.Store(UserName, _token);
-                        if (autoRefresh)
-                        {
-                            IssueRefreshCallback(_token);
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Refresh failed");
-                        OAuthErrorInfo error = Newtonsoft.Json.JsonConvert.DeserializeObject<OAuthErrorInfo>(responseString);
-                        if (error != null)
-                        {
-                            var r = new ApiResponse();
-                            r.Success = false;
-                            r.Error = new ApiResponse.ErrorInfo() { Type = error.Error, Message = error.Description };
-                            return r;
-                        }
-                    }
-                    return new ApiResponse() { Success = true };
-                }
-            }
-            return new ApiResponse() { Success = false, Error = new ApiResponse.ErrorInfo() { Type = "ExpiredToken", Message = "Token can not be refreshed" } };
-        }
-
-        public ApiResponse Login(string userName, string password, bool autoRefresh)
-        {
-            if (!ApiInfo.IsValid)
-            {
-                throw new InvalidProgramException("The ApiInfo object does not have valid data.");
-            }
-
-            //Check if we have a token
             AuthToken storedToken = TokenStore.Find(userName);
             if (storedToken != null)
             {
                 if (storedToken.IsValid)
                 {
                     _token = storedToken;
-                    return new ApiResponse() { Success = true };
+                    return true;
                 }
                 else
                 {
                     TokenStore.Purge(userName);
                 }
             }
-
-            //Clear current ticket if present
-            Logout();
-
+            return false;
+        }
+        private ApiResponse IssueTokenRequest(string userName, string body, bool autoRefresh = false)
+        {
             HttpWebRequest req = WebRequest.CreateHttp(Path.Combine(ApiInfo.BaseEndpoint, "oauth/token"));
             req.Headers.Add("Voat-ApiKey", ApiInfo.ApiPublicKey);
             req.ContentType = "application/x-www-form-urlencoded";
@@ -187,7 +125,7 @@ namespace VoatApiWrapper
 
             using (var content = new StreamWriter(req.GetRequestStream()))
             {
-                content.Write($"grant_type=password&username={userName}&password={password}&client_id={ApiInfo.ApiPublicKey}&client_secret={ApiInfo.ApiPrivateKey}");
+                content.Write(body);
             }
 
             HttpWebResponse response = null;
@@ -203,7 +141,7 @@ namespace VoatApiWrapper
 
             if (response == null)
             {
-                return Helper.NoServerResponse;
+                return (ApiResponse)Helper.NoServerResponse<object>();
             }
 
             string responseString = Helper.ReadStream(response.GetResponseStream());
@@ -229,6 +167,41 @@ namespace VoatApiWrapper
                 }
             }
             return new ApiResponse() { Success = true };
+        }
+        public ApiResponse Login(string userName, string password, bool autoRefresh)
+        {
+            if (!ApiInfo.IsValid)
+            {
+                throw new InvalidProgramException("The ApiInfo object does not have valid data.");
+            }
+
+            if (TryLogin(userName))
+            {
+                return new ApiResponse() { Success = true };
+            }
+
+            //Clear current ticket if present
+            Logout();
+
+            return IssueTokenRequest(
+                userName,
+                $"grant_type=password&username={userName}&password={password}&client_id={ApiInfo.ApiPublicKey}&client_secret={ApiInfo.ApiPrivateKey}", 
+                autoRefresh);
+        }
+
+        public ApiResponse Refresh(AuthToken storedToken, bool autoRefresh = false)
+        {
+            if (storedToken != null)
+            {
+                if (storedToken.IsValid)
+                {
+                    return IssueTokenRequest(
+                        storedToken.userName,
+                        $"grant_type=refresh_token&client_id={ApiInfo.ApiPublicKey}&client_secret={ApiInfo.ApiPrivateKey}&refresh_token={storedToken.refresh_token}",
+                        autoRefresh);
+                }
+            }
+            return new ApiResponse() { Success = false, Error = new ApiResponse.ErrorInfo() { Type = "ExpiredToken", Message = "Token can not be refreshed" } };
         }
         /// <summary>
         /// Clears token from instance of ApiAuthenticator but leaves token in store

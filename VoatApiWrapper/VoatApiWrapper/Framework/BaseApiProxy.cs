@@ -65,21 +65,28 @@ namespace VoatApiWrapper
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="callback"></param>
-        protected void RequestCallBack<T>(Callback<T> callback) where T: ApiResponse
+        protected void RequestCallBack<T>(ApiResponseCallback<T> callback) 
         {
             Task task = new Task(async () =>
             {
                 while (!callback.CancellationToken.IsCancellationRequested)
                 {
-                    var response = Request(callback.Method, callback.Endpoint, callback.Body, callback.QueryStringPairs);
-                    callback.Handler(this, (T)response);
+                    var response = Request<T>(callback.Method, callback.Endpoint, callback.Body, callback.QueryStringPairs);
+                    //((dynamic)callback.Handler).Invoke(this, response);
+                    callback.Handler(this, response);
                     await Task.Delay(callback.Delay).ConfigureAwait(false);
                 }
             }, callback.CancellationToken);
             callback.Task = task;
             task.Start();
         }
+
         protected ApiResponse Request(HttpMethod method, string endpoint, object body = null, object queryStringPairs = null)
+        {
+            return Request<dynamic>(method, endpoint, body, queryStringPairs);
+        }
+
+        protected ApiResponse<T> Request<T>(HttpMethod method, string endpoint, object body = null, object queryStringPairs = null)
         {
             //prepare body
             string jsonBody = null;
@@ -118,7 +125,7 @@ namespace VoatApiWrapper
                     _lockHandle.WaitOne();
                 }
 
-                return PrivateRequest(method, endpoint, jsonBody, queryString);
+                return PrivateRequest<T>(method, endpoint, jsonBody, queryString);
             }
             finally
             {
@@ -129,8 +136,7 @@ namespace VoatApiWrapper
             }
         }
 
-        // This is a recursive method
-        private ApiResponse PrivateRequest(HttpMethod method, string endpoint, string body, string queryString, int requestCount = 0)
+        private ApiResponse<T> PrivateRequest<T>(HttpMethod method, string endpoint, string body, string queryString, int requestCount = 0)
         {
             if (!ApiInfo.IsValid)
             {
@@ -173,11 +179,11 @@ namespace VoatApiWrapper
 
             if (response == null)
             {
-                return Helper.NoServerResponse;
+                return Helper.NoServerResponse<T>();
             }
 
             string responseString = Helper.ReadStream(response.GetResponseStream());
-            ApiResponse apiResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResponse>(responseString);
+            ApiResponse<T> apiResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResponse<T>>(responseString);
             apiResponse.StatusCode = response.StatusCode;
 
             //reissue if ApiThrottleLimit exception
@@ -189,14 +195,14 @@ namespace VoatApiWrapper
                     var refreshResponse = ApiAuthenticator.Instance.Refresh();
                     if (refreshResponse.Success)
                     {
-                        return PrivateRequest(method, endpoint, body, queryString, (requestCount + 1));
+                        return PrivateRequest<T>(method, endpoint, body, queryString, (requestCount + 1));
                     }
                 }
                 else if (apiResponse.Error.Type == "ApiThrottleLimit" && RetryOnThrottleLimit && requestCount < MaxThrottleRetryCount)
                 {
                     Console.WriteLine("[{1}] ApiThrottleLimit. Waiting {0}", WaitTimeOnThrottleLimit, System.Threading.Thread.CurrentThread.ManagedThreadId.ToString());
                     System.Threading.Thread.Sleep(WaitTimeOnThrottleLimit);
-                    return PrivateRequest(method, endpoint, body, queryString, (requestCount + 1));
+                    return PrivateRequest<T>(method, endpoint, body, queryString, (requestCount + 1));
                 }
                 return apiResponse;
             }

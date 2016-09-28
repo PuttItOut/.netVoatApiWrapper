@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.IsolatedStorage;
 
@@ -91,7 +92,7 @@ namespace VoatApiWrapper
         }
     }
 
-    public class DummyTokenStore : ITokenStore
+    public class DisabledTokenStore : ITokenStore
     {
         public AuthToken Find(string id)
         {
@@ -106,6 +107,32 @@ namespace VoatApiWrapper
         public void Purge(string id)
         {
             /*no-op*/
+        }
+    }
+    public class MemoryTokenStore : ITokenStore
+    {
+        private Dictionary<string, AuthToken> _tokens = new Dictionary<string, AuthToken>();
+
+        public AuthToken Find(string id)
+        {
+            if (_tokens.ContainsKey(id))
+            {
+                return _tokens[id];
+            }
+            return null;
+        }
+
+        public void Store(string id, AuthToken token)
+        {
+            _tokens[id] = token;
+        }
+
+        public void Purge(string id)
+        {
+            if (_tokens.ContainsKey(id))
+            {
+                _tokens.Remove(id);
+            }
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Net.Http;
 using VoatApiWrapper.Framework;
 using VoatApiWrapper.Models;
@@ -8,7 +10,7 @@ namespace VoatApiWrapper
     //This isn't a complete coverage
     public class VoatApiProxy : BaseApiProxy
     {
-        public VoatApiProxy(ApiAuthenticator authenticator)
+        public VoatApiProxy(ApiAuthenticator authenticator = null)
         {
             base.Authenticator = authenticator;
         }
@@ -187,7 +189,7 @@ namespace VoatApiWrapper
         {
             return Request(HttpMethod.Get, String.Format("api/v1/stream/submissions{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}"));
         }
-        public void PollSubmissionStream(Callback<ApiResponse> registration, string subverse = null)
+        public void PollSubmissionStream(ApiResponseCallback<IEnumerable<object>> registration, string subverse = null)
         {
             registration.Method = HttpMethod.Get;
             registration.Endpoint = String.Format("api/v1/stream/submissions{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}");
@@ -198,7 +200,7 @@ namespace VoatApiWrapper
         {
             return Request(HttpMethod.Get, String.Format("api/v1/stream/comments{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}"));
         }
-        public void PollCommentStream(Callback<ApiResponse> registration, string subverse = null)
+        public void PollCommentStream(ApiResponseCallback<IEnumerable<Comment>> registration, string subverse = null)
         {
             registration.Method = HttpMethod.Get;
             registration.Endpoint = String.Format("api/v1/stream/comments{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}");

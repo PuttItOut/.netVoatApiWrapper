@@ -6,17 +6,14 @@ namespace VoatApiWrapper
 {
     public static class Helper
     {
-        public static ApiResponse NoServerResponse
+        public static ApiResponse<T> NoServerResponse<T>()
         {
-            get
+            return new ApiResponse<T>()
             {
-                return new ApiResponse()
-                {
-                    StatusCode = HttpStatusCode.ServiceUnavailable,
-                    Success = false,
-                    Error = new ApiResponse.ErrorInfo() { Type = "NoResponse", Message = "No response was received from the server." }
-                };
-            }
+                StatusCode = HttpStatusCode.ServiceUnavailable,
+                Success = false,
+                Error = new ApiResponse.ErrorInfo() { Type = "NoResponse", Message = "No response was received from the server." }
+            };
         }
 
         public static string ReadStream(Stream stream)

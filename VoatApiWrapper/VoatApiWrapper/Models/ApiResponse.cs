@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace VoatApiWrapper.Models
 {
-    public class ApiResponse<T> : BaseApiResponse
+    public class ApiResponse<T> : ApiResponse
     {
         /// <summary>
         /// This field contains the JSON Payload. 
@@ -26,7 +26,7 @@ namespace VoatApiWrapper.Models
         }
     }
 
-    public class ApiResponse : ApiResponse<dynamic>
+    public class ApiResponse : BaseApiResponse
     {
 
     }
@@ -45,8 +45,6 @@ namespace VoatApiWrapper.Models
         /// </summary>
         [JsonProperty("success", Order = 1)]
         public bool Success { get; set; }
-
-      
 
         /// <summary>
         /// If present the operation failed. Details are presented here.

@@ -50,6 +50,7 @@
     <Compile Include="Auth\ApiAuthenticator.cs" />
     <Compile Include="Framework\CallBack.cs" />
     <Compile Include="Framework\TokenStore.cs" />
+    <Compile Include="Models\Comment.cs" />
     <Compile Include="Models\VoteEnum.cs" />
     <Compile Include="Models\ApiResponse.cs" />
     <Compile Include="Models\OAuthErrorInfo.cs" />
