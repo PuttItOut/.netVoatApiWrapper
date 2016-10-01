@@ -118,8 +118,8 @@ namespace VoatApiWrapper
         }
         private ApiResponse IssueTokenRequest(string userName, string body, bool autoRefresh = false)
         {
-            HttpWebRequest req = WebRequest.CreateHttp(Path.Combine(ApiInfo.BaseEndpoint, "oauth/token"));
-            req.Headers.Add("Voat-ApiKey", ApiInfo.ApiPublicKey);
+            HttpWebRequest req = WebRequest.CreateHttp(Path.Combine(ApiInfo.Endpoint, "oauth/token"));
+            req.Headers.Add("Voat-ApiKey", ApiInfo.PublicKey);
             req.ContentType = "application/x-www-form-urlencoded";
             req.Method = "POST";
 
@@ -148,6 +148,7 @@ namespace VoatApiWrapper
 
             if (response.StatusCode == HttpStatusCode.OK)
             {
+                Console.WriteLine($"Auth for {userName} OK");
                 _token = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthToken>(responseString);
                 TokenStore.Store(userName, _token);
                 if (autoRefresh)
@@ -185,7 +186,7 @@ namespace VoatApiWrapper
 
             return IssueTokenRequest(
                 userName,
-                $"grant_type=password&username={userName}&password={password}&client_id={ApiInfo.ApiPublicKey}&client_secret={ApiInfo.ApiPrivateKey}", 
+                $"grant_type=password&username={userName}&password={password}&client_id={ApiInfo.PublicKey}&client_secret={ApiInfo.PrivateKey}", 
                 autoRefresh);
         }
 
@@ -197,7 +198,7 @@ namespace VoatApiWrapper
                 {
                     return IssueTokenRequest(
                         storedToken.userName,
-                        $"grant_type=refresh_token&client_id={ApiInfo.ApiPublicKey}&client_secret={ApiInfo.ApiPrivateKey}&refresh_token={storedToken.refresh_token}",
+                        $"grant_type=refresh_token&client_id={ApiInfo.PublicKey}&client_secret={ApiInfo.PrivateKey}&refresh_token={storedToken.refresh_token}",
                         autoRefresh);
                 }
             }
@@ -230,7 +231,7 @@ namespace VoatApiWrapper
 
         public void SignRequest(HttpWebRequest request)
         {
-            if (!String.IsNullOrEmpty(ApiInfo.ApiPrivateKey))
+            if (!String.IsNullOrEmpty(ApiInfo.PrivateKey))
             {
                 request.Headers.Add("Voat-HMAC", "TODO");
             }

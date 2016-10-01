@@ -143,12 +143,12 @@ namespace VoatApiWrapper
                 throw new InvalidOperationException("ApiInfo object has invalid state.");
             }
 
-            string finalEndpoint = Path.Combine(ApiInfo.BaseEndpoint, endpoint) + (!String.IsNullOrEmpty(queryString) ? "?" + queryString : "");
+            string finalEndpoint = Path.Combine(ApiInfo.Endpoint, endpoint) + (!String.IsNullOrEmpty(queryString) ? "?" + queryString : "");
 
             HttpWebRequest req = WebRequest.CreateHttp(finalEndpoint);
             req.Method = method.Method;
             req.ContentType = "application/json";
-            req.Headers.Add("Voat-ApiKey", ApiInfo.ApiPublicKey);
+            req.Headers.Add("Voat-ApiKey", ApiInfo.PublicKey);
 
             Authenticator.AuthenticateRequest(req);
 

@@ -6,7 +6,7 @@ namespace VoatApiWrapper
     {
         private static string _endpoint = null;
 
-        public static string BaseEndpoint
+        public static string Endpoint
         {
             get
             {
@@ -22,12 +22,12 @@ namespace VoatApiWrapper
             }
         }
 
-        public static string ApiPublicKey = null;
-        public static string ApiPrivateKey = null;
+        public static string PublicKey = null;
+        public static string PrivateKey = null;
 
         public static bool IsValid
         {
-            get { return !String.IsNullOrEmpty(BaseEndpoint) && !String.IsNullOrEmpty(ApiPublicKey); }
+            get { return !String.IsNullOrEmpty(Endpoint) && !String.IsNullOrEmpty(PublicKey); }
         }
     }
 }

@@ -17,24 +17,24 @@ namespace VoatApiWrapper
 
         #region Submission
 
-        public ApiResponse SubmitDiscussion(string subverse, string title, string content)
+        public ApiResponse<Submission> SubmitDiscussion(string subverse, string title, string content)
         {
-            return Request(HttpMethod.Post, String.Format("api/v1/v/{0}", subverse), new { title = title, content = content });
+            return Request<Submission>(HttpMethod.Post, String.Format("api/v1/v/{0}", subverse), new { title = title, content = content });
         }
 
-        public ApiResponse SubmitLink(string subverse, string title, string url)
+        public ApiResponse<Submission> SubmitLink(string subverse, string title, string url)
         {
-            return Request(HttpMethod.Post, String.Format("api/v1/v/{0}", subverse), new { title = title, url = url });
+            return Request<Submission>(HttpMethod.Post, String.Format("api/v1/v/{0}", subverse), new { title = title, url = url });
         }
 
-        public ApiResponse EditLinkSubmission(int submissionID, string title, string url)
+        public ApiResponse<Submission> EditLinkSubmission(int submissionID, string title, string url)
         {
-            return Request(HttpMethod.Put, String.Format("api/v1/submissions/{0}", submissionID.ToString()), new { title = title, url = url });
+            return Request<Submission>(HttpMethod.Put, String.Format("api/v1/submissions/{0}", submissionID.ToString()), new { title = title, url = url });
         }
 
-        public ApiResponse EditDiscussionSubmission(int submissionID, string title, string content)
+        public ApiResponse<Submission> EditDiscussionSubmission(int submissionID, string title, string content)
         {
-            return Request(HttpMethod.Put, String.Format("api/v1/submissions/{0}", submissionID.ToString()), new { title = title, content = content });
+            return Request<Submission>(HttpMethod.Put, String.Format("api/v1/submissions/{0}", submissionID.ToString()), new { title = title, content = content });
         }
 
         public ApiResponse DeleteSubmission(int submissionID)
@@ -185,20 +185,20 @@ namespace VoatApiWrapper
 
         #region Stream
 
-        public ApiResponse GetSubmissionStream(string subverse = null)
+        public ApiResponse<IEnumerable<Submission>> GetSubmissionStream(string subverse = null)
         {
-            return Request(HttpMethod.Get, String.Format("api/v1/stream/submissions{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}"));
+            return Request<IEnumerable<Submission>>(HttpMethod.Get, String.Format("api/v1/stream/submissions{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}"));
         }
-        public void PollSubmissionStream(ApiResponseCallback<IEnumerable<object>> registration, string subverse = null)
+        public void PollSubmissionStream(ApiResponseCallback<IEnumerable<Submission>> registration, string subverse = null)
         {
             registration.Method = HttpMethod.Get;
             registration.Endpoint = String.Format("api/v1/stream/submissions{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}");
             RequestCallBack(registration);
         }
 
-        public ApiResponse GetCommentStream(string subverse = null)
+        public ApiResponse<IEnumerable<Comment>> GetCommentStream(string subverse = null)
         {
-            return Request(HttpMethod.Get, String.Format("api/v1/stream/comments{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}"));
+            return Request<IEnumerable<Comment>>(HttpMethod.Get, String.Format("api/v1/stream/comments{0}", String.IsNullOrEmpty(subverse) ? "" : $"/v/{subverse}"));
         }
         public void PollCommentStream(ApiResponseCallback<IEnumerable<Comment>> registration, string subverse = null)
         {

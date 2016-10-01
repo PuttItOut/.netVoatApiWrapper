@@ -65,6 +65,11 @@ namespace VoatApiWrapper.Models
             /// </summary>
             [JsonProperty("message")]
             public string Message { get; set; }
+
+            public override string ToString()
+            {
+                return $"{Type} - {Message}";
+            }
         }
 
       
